@@ -205,6 +205,17 @@
             z-index: 10;
         }
 
+        /* --- Header Scroll Hide Effect --- */
+        header {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        header.hide-header {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
         /* --- AI Chat Modal Styles --- */
         #ai-chat-modal {
             position: fixed;
@@ -230,6 +241,9 @@
             max-width: 600px;
             max-height: 90vh;
             background-color: #fff;
+            background-image: url('https://gentle-jade-frg5jvwgjg-n12eoo2huy.edgeone.app/%F0%9F%93%8C%CB%8A%CB%97%20by%20hazl_x.jpg');
+            background-size: cover;
+            background-position: center;
             border: 2px solid #000;
             box-shadow: 8px 8px 0px #000;
             border-radius: 8px;
@@ -344,6 +358,60 @@
         #chat-send-btn:hover { background-color: #333; }
         #chat-send-btn:disabled { background-color: #888; cursor: not-allowed; }
 
+        /* --- Staggered Menu Styles (mobile) --- */
+        .staggered-menu-wrapper { position: relative; width: 100%; height: 100%; z-index: 60; }
+        .staggered-menu-wrapper .sm-toggle { background: transparent; border: none; color: #000; display:flex; align-items:center; gap:0.5rem; }
+        .staggered-menu-header { position: relative; display:flex; align-items:center; justify-content:space-between; padding:0.5rem 1rem; pointer-events: none; }
+        .staggered-menu-header > * { pointer-events: auto; }
+        .sm-prelayers { position: absolute; top: 0; right: 0; bottom: 0; width: clamp(260px, 38vw, 420px); pointer-events: none; z-index: 5; overflow: hidden; }
+        .sm-prelayer { position: absolute; top: 0; right: 0; height: 100%; width: 100%; transform: translateX(100%); transition: transform 0.55s cubic-bezier(.16,1,.3,1); }
+        .staggered-menu-panel { position: absolute; top: 0; right: 0; width: clamp(260px, 38vw, 420px); height: 100vh; background: #fff; display:flex; flex-direction:column; padding:6em 2em 2em; transform: translateX(100%); transition: transform 0.5s cubic-bezier(.16,1,.3,1); z-index: 10; overflow-y: auto; }
+        .sm-panel-item { color:#000; font-weight:700; font-size:2rem; text-decoration:none; display:block; padding:0.25rem 0; }
+        .sm-socials-title { margin-top: auto; font-weight:600; color:#5227ff; }
+        /* Toggle text stack */
+        .sm-toggle-textWrap { position: relative; display: inline-block; height: 1em; overflow: hidden; white-space: nowrap; }
+        .sm-toggle-textInner { display: flex; flex-direction: column; line-height: 1; transition: transform 0.28s cubic-bezier(.16,1,.3,1); }
+        .sm-toggle-line { display:block; height:1em; }
+        /* Icon rotation */
+        .sm-icon { width: 18px; height: 18px; display:inline-flex; align-items:center; justify-content:center; }
+        .sm-icon-line { width: 14px; height: 2px; background: currentColor; display:block; transition: transform 0.28s, opacity 0.2s; }
+        .sm-icon-line-v { position: absolute; transform: rotate(90deg); }
+        /* When opened */
+        .staggered-menu-wrapper[data-open] .sm-prelayer { transform: translateX(0); }
+        .staggered-menu-wrapper[data-open] .staggered-menu-panel { transform: translateX(0); }
+        .staggered-menu-wrapper[data-open] .sm-toggle-textInner { transform: translateY(-100%); }
+        .staggered-menu-wrapper[data-open] .sm-icon { transform: rotate(225deg); }
+
+        /* Make wrapper only visible on small screens */
+        @media (min-width: 768px) {
+            .staggered-menu-wrapper { display: none !important; }
+        }
+
+        /* --- Antigravity Text Effect --- */
+        .antigravity-text {
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.15em;
+            -webkit-text-stroke: 2px rgba(255, 255, 255, 0.3);
+            text-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.2),
+                0 0 40px rgba(255, 255, 255, 0.1),
+                inset -2px -2px 5px rgba(0, 0, 0, 0.3),
+                inset 2px 2px 5px rgba(255, 255, 255, 0.2);
+            animation: antigravity-float 6s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+        }
+
+        @keyframes antigravity-float {
+            0%, 100% {
+                transform: translateY(0px) rotateZ(0deg);
+                opacity: 0.15;
+            }
+            50% {
+                transform: translateY(-20px) rotateZ(2deg);
+                opacity: 0.25;
+            }
+        }
+
     </style>
 </head>
 <body class="antialiased">
@@ -403,25 +471,50 @@
                         <a href="#projects" class="text-sm font-bold hover:underline underline-offset-4">PROJECTS</a>
                         <a href="#contact" class="text-sm font-bold hover:underline underline-offset-4">CONTACT</a>
                     </div>
-                    <!-- Mobile Button (Animated Hamburger) -->
+                    <!-- Mobile: Staggered Hamburger Menu -->
                     <div class="md:hidden">
-                        <button id="mobile-menu-btn" class="p-2 focus:outline-none">
-                            <div class="hamburger-icon">
-                                <span class="hamburger-line line-1"></span>
-                                <span class="hamburger-line line-2"></span>
-                                <span class="hamburger-line line-3"></span>
+                        <div class="staggered-menu-wrapper" data-position="right" aria-hidden="false">
+                            <div class="sm-prelayers" aria-hidden="true">
+                                <div class="sm-prelayer" style="background:#B19EEF"></div>
+                                <div class="sm-prelayer" style="background:#5227FF"></div>
                             </div>
-                        </button>
+
+                            <header class="staggered-menu-header" aria-label="Mobile navigation header">
+                                <div style="width:1px; height:1px; overflow:hidden; position:relative;">&nbsp;</div>
+                                <button id="mobile-menu-btn" class="sm-toggle p-2 focus:outline-none" aria-expanded="false" aria-controls="staggered-menu-panel" type="button">
+                                    <span class="sm-toggle-textWrap" aria-hidden="true">
+                                        <span class="sm-toggle-textInner">
+                                            <span class="sm-toggle-line">Menu</span>
+                                            <span class="sm-toggle-line">Close</span>
+                                        </span>
+                                    </span>
+                                    <span class="sm-icon" aria-hidden="true">
+                                        <span class="sm-icon-line"></span>
+                                        <span class="sm-icon-line sm-icon-line-v"></span>
+                                    </span>
+                                </button>
+                            </header>
+
+                            <aside id="staggered-menu-panel" class="staggered-menu-panel" aria-hidden="true">
+                                <div class="sm-panel-inner">
+                                    <ul class="sm-panel-list" role="list">
+                                        <li class="sm-panel-itemWrap"><a class="sm-panel-item" href="#home"><span class="sm-panel-itemLabel">Home</span></a></li>
+                                        <li class="sm-panel-itemWrap"><a class="sm-panel-item" href="#about"><span class="sm-panel-itemLabel">About</span></a></li>
+                                        <li class="sm-panel-itemWrap"><a class="sm-panel-item" href="#projects"><span class="sm-panel-itemLabel">Projects</span></a></li>
+                                        <li class="sm-panel-itemWrap"><a class="sm-panel-item" href="#contact"><span class="sm-panel-itemLabel">Contact</span></a></li>
+                                    </ul>
+                                    <div class="sm-socials" aria-label="Social links">
+                                        <h3 class="sm-socials-title">Socials</h3>
+                                        <ul class="sm-socials-list" role="list">
+                                            <li class="sm-socials-item"><a href="https://x.com/Pratham21207080?t=-EsQA5QIt93UfXARW54B3A&s=09" class="sm-socials-link" target="_blank" rel="noopener noreferrer">X</a></li>
+                                            <li class="sm-socials-item"><a href="https://www.linkedin.com/in/pratham-solanki-a846a331b" class="sm-socials-link" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+                                            <li class="sm-socials-item"><a href="https://github.com/schrodingercats-sudo" class="sm-socials-link" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </aside>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <!-- Mobile Dropdown -->
-            <div id="mobile-menu" class="absolute top-20 left-0 w-full bg-white border-b border-gray-200 transform scale-y-0 md:hidden">
-                <div class="px-4 py-4 space-y-4 text-center">
-                    <a href="#home" class="block text-lg font-bold py-2 hover:bg-gray-50 transition-colors mobile-link">Home</a>
-                    <a href="#about" class="block text-lg font-bold py-2 hover:bg-gray-50 transition-colors mobile-link">About</a>
-                    <a href="#projects" class="block text-lg font-bold py-2 hover:bg-gray-50 transition-colors mobile-link">Projects</a>
-                    <a href="#contact" class="block text-lg font-bold py-2 hover:bg-gray-50 transition-colors mobile-link">Contact</a>
                 </div>
             </div>
         </header>
@@ -467,7 +560,9 @@
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                         <div class="relative border-2 border-black bg-white p-2 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-2 duration-500">
-                             <img src="https://placehold.co/600x800/111/fff?text=Pratham" alt="Profile" class="w-full h-full object-cover grayscale">
+                             <video autoplay muted loop class="w-full h-full object-cover">
+                                <source src="https://incredible-harlequin-gcidvl1xbv-g341phxtrx.edgeone.dev/social_yana_s_A_cinematic_animation_of_floating_man_flying_AT_HIGH_S_e5804f65-0ed5-4716-8637-fc410acfe4f7_0.mp4" type="video/mp4">
+                             </video>
                         </div>
                         <div>
                             <h2 class="text-3xl font-black mb-6">ABOUT ME</h2>
@@ -553,8 +648,15 @@
             </section>
 
             <!-- Contact -->
-            <section id="contact" class="py-24 bg-black text-white">
-                <div class="max-w-2xl mx-auto px-4 text-center">
+            <section id="contact" class="py-48 text-white relative overflow-hidden">
+                <!-- Background Video -->
+                <video autoplay muted loop class="absolute inset-0 w-full h-full object-cover -z-10">
+                    <source src="https://annual-red-efedaerde2-p6mwc811d4.edgeone.dev/media.mp4" type="video/mp4">
+                </video>
+                <!-- Dark overlay for better text readability -->
+                <div class="absolute inset-0 bg-black opacity-70 -z-10"></div>
+                
+                <div class="max-w-2xl mx-auto px-4 text-center relative z-10">
                     <h2 class="text-4xl font-black mb-8">READY TO BUILD?</h2>
                     <!-- ✨ Updated Form with ID and input names ✨ -->
                     <form id="contact-form" class="text-left space-y-6">
@@ -567,14 +669,6 @@
                         <!-- Status message for success/error -->
                         <p id="contact-status" class="text-center text-sm pt-2"></p> 
                     </form>
-                    <div class="mt-16 pt-8 border-t border-gray-800 text-gray-500 text-sm flex justify-between items-center">
-                        <span>&copy; 2025 Pratham</span>
-                        <div class="space-x-6 flex">
-                            <a href="https://x.com/Pratham21207080?t=-EsQA5QIt93UfXARW54B3A&s=09" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors"><i class="ph-fill ph-twitter-logo text-xl"></i></a>
-                            <a href="https://www.linkedin.com/in/pratham-solanki-a846a331b?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors"><i class="ph-fill ph-linkedin-logo text-xl"></i></a>
-                            <a href="https://github.com/schrodingercats-sudo" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors"><i class="ph-fill ph-github-logo text-xl"></i></a>
-                        </div>
-                    </div>
                 </div>
             </section>
         </main>
@@ -873,27 +967,63 @@ Here is Pratham's information:
         }
 
 
+        // --- HEADER SCROLL HIDE EFFECT ---
+        function initHeaderScrollEffect() {
+            const header = document.querySelector('header');
+            const heroSection = document.getElementById('home');
+            let isHeaderHidden = false;
+
+            window.addEventListener('scroll', () => {
+                if (!heroSection) return;
+                
+                // Get the bottom of the hero section
+                const heroBottom = heroSection.offsetTop + heroSection.offsetHeight;
+                const currentScroll = window.scrollY;
+
+                // Show header if we're at the top, hide if we've passed hero section
+                if (currentScroll > heroBottom) {
+                    if (!isHeaderHidden) {
+                        header.classList.add('hide-header');
+                        isHeaderHidden = true;
+                    }
+                } else {
+                    if (isHeaderHidden) {
+                        header.classList.remove('hide-header');
+                        isHeaderHidden = false;
+                    }
+                }
+            }, { passive: true });
+        }
+
         // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
             runBoot();
 
-            // Mobile Menu
+            // Initialize header scroll effect
+            initHeaderScrollEffect();
+
+            // Mobile Menu (staggered wrapper)
             const menuBtn = document.getElementById('mobile-menu-btn');
-            const menu = document.getElementById('mobile-menu');
-            const mobileLinks = document.querySelectorAll('.mobile-link');
+            const wrapper = document.querySelector('.staggered-menu-wrapper');
+            const panel = document.getElementById('staggered-menu-panel');
+            const panelLinks = wrapper ? wrapper.querySelectorAll('.sm-panel-item') : [];
             let isMenuOpen = false;
 
             function toggleMenu() {
                 isMenuOpen = !isMenuOpen;
-                menu.style.transform = isMenuOpen ? 'scaleY(1)' : 'scaleY(0)';
-                if (isMenuOpen) menuBtn.classList.add('menu-active');
-                else menuBtn.classList.remove('menu-active');
+                if (wrapper) {
+                    if (isMenuOpen) wrapper.setAttribute('data-open', '');
+                    else wrapper.removeAttribute('data-open');
+                }
+                if (panel) panel.setAttribute('aria-hidden', String(!isMenuOpen));
+                if (menuBtn) menuBtn.classList.toggle('menu-active', isMenuOpen);
+                if (menuBtn) menuBtn.setAttribute('aria-expanded', String(isMenuOpen));
             }
 
-            menuBtn.addEventListener('click', toggleMenu);
-            mobileLinks.forEach(link => {
+            if (menuBtn) menuBtn.addEventListener('click', toggleMenu);
+            panelLinks.forEach(link => {
                 link.addEventListener('click', () => {
-                    if(isMenuOpen) toggleMenu();
+                    if (isMenuOpen) toggleMenu();
                 });
             });
             
