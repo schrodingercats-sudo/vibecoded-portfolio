@@ -14,14 +14,12 @@ app.use(express.json());
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- API Routes ---
+// API Routes
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Get all projects
 app.get('/api/projects', async (req, res) => {
   try {
     const db = await connectToDatabase();
@@ -37,7 +35,6 @@ app.get('/api/projects', async (req, res) => {
   }
 });
 
-// Get all skills
 app.get('/api/skills', async (req, res) => {
   try {
     const db = await connectToDatabase();
@@ -53,7 +50,6 @@ app.get('/api/skills', async (req, res) => {
   }
 });
 
-// NVIDIA AI chat proxy (OpenAI-compatible)
 app.post('/api/chat', async (req, res) => {
   try {
     const apiKey = process.env.NVIDIA_API_KEY;
@@ -96,7 +92,6 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Fallback: serve index.html for any non-API route
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

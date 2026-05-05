@@ -9,18 +9,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- ✨ Added EmailJS SDK ✨ -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script type="text/javascript">
         (function() {
-            // Initialize EmailJS with your Public Key
             emailjs.init({
               publicKey: "uZuEsQE9SXIbjD7z8",
             });
         })();
     </script>
 
-    <!-- ✨ Unicorn Studio Library ✨ -->
     <script type="text/javascript">
         !function(){
             if(!window.UnicornStudio){
@@ -779,7 +776,7 @@
                                     <p class="text-sm text-gray-600">Prompt Engineering, Vercel</p>
                                 </div>
                             </div>
-                            <!-- ✨ GEMINI FEATURE BUTTON ✨ -->
+
                             <button id="open-ai-chat-btn" class="mt-10 w-full bg-black text-white font-bold py-4 flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors">
                                 <i class="ph-fill ph-sparkle text-yellow-400"></i>
                                 Ask My AI Assistant About Me
@@ -934,7 +931,7 @@
                 
                 <div class="max-w-2xl mx-auto px-4 text-center relative z-10">
                     <h2 class="text-4xl font-black mb-8">READY TO BUILD?</h2>
-                    <!-- ✨ Updated Form with ID and input names ✨ -->
+
                     <form id="contact-form" class="text-left space-y-6">
                         <input type="text" name="user_name" placeholder="Name" required class="w-full bg-transparent border-b border-gray-600 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors font-medium">
                         <input type="email" name="user_email" placeholder="Email" required class="w-full bg-transparent border-b border-gray-600 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-white transition-colors font-medium">
@@ -1109,7 +1106,7 @@
             window.location.href = url;
         };
 
-        // --- ✨ AI CHATBOT LOGIC (NVIDIA / Llama) ✨ ---
+        // Chat modal logic
         const chatModal = document.getElementById('ai-chat-modal');
         const openChatBtn = document.getElementById('open-ai-chat-btn');
         const closeChatBtn = document.getElementById('chat-close-btn');
@@ -1343,7 +1340,7 @@ Rules:
                 });
             });
             
-            // --- ✨ EMAILJS CONTACT FORM LOGIC ✨ ---
+            // Contact form handler
             const contactForm = document.getElementById('contact-form');
             const submitBtn = document.getElementById('contact-submit-btn');
             const statusMsg = document.getElementById('contact-status');
