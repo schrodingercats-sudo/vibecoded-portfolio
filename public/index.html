@@ -1109,7 +1109,7 @@
             window.location.href = url;
         };
 
-        // --- ✨ GEMINI API CHATBOT LOGIC ✨ ---
+        // --- ✨ AI CHATBOT LOGIC (NVIDIA / Llama) ✨ ---
         const chatModal = document.getElementById('ai-chat-modal');
         const openChatBtn = document.getElementById('open-ai-chat-btn');
         const closeChatBtn = document.getElementById('chat-close-btn');
@@ -1118,31 +1118,33 @@
         const chatSendBtn = document.getElementById('chat-send-btn');
         const chatMessages = document.getElementById('chat-messages');
 
-        // System prompt to guide the AI
-        const systemPrompt = `You are a friendly and professional AI assistant for Pratham, a full-stack developer. Your job is to answer questions about his skills, projects, and experience.
+        const systemPrompt = `You are a friendly, slightly witty AI assistant embedded in Pratham's portfolio website. You help visitors learn about Pratham's work and skills.
 
 Here is Pratham's information:
 - Name: Pratham
 - Based in: India
-- Role: Full-stack developer
+- Role: Full-stack developer & builder
 - Skills:
-    - Frontend: React, Next.js, Tailwind
-    - Backend: Node.js, Python, Firebase
-    - AI & Tools: Prompt Engineering, Vercel
+    - Frontend: React, Next.js, Tailwind CSS
+    - Backend: Node.js, Express, Python, Firebase
+    - AI & Tools: Prompt Engineering, Vercel, MongoDB
 - Key Projects:
-    1.  **UPI Guard:** A security tool that detects fake UPI links and SMS to prevent financial scams.
-    2.  **CampsHub:** An EduTech platform for student project collaboration.
-    3.  **Promptizer:** An AI tool that optimizes prompts for AI coding models.
-- Personality: You should be helpful, slightly witty, and focused on his professional strengths. 
-- Rules:
-    - Keep answers concise (2-3 sentences max).
-    - Do not answer questions that are not related to Pratham's professional profile. Gently decline and steer the conversation back.
-    - Format responses with simple markdown (bold, lists).`;
+    1. **UPI Guard:** Security tool that detects fake UPI links and SMS to prevent financial scams.
+    2. **CampsHub:** EduTech platform for student project collaboration.
+    3. **Promptizer:** AI tool that optimizes prompts for coding models.
+- Interests: Anime (Re:Zero, Chainsaw Man, Demon Slayer), Music, Building cool stuff
+- GitHub: github.com/schrodingercats-sudo
 
-        // Store chat history
+Rules:
+- Be conversational and engaging — like chatting with a friend who happens to know everything about Pratham.
+- Keep answers concise (2-4 sentences).
+- If asked something unrelated to Pratham, gently steer back or have fun with it briefly before redirecting.
+- Use simple markdown formatting (bold, lists) when helpful.`;
+
+        // OpenAI-format chat history
         let chatHistory = [
-            { role: "user", parts: [{ text: "Hello" }] },
-            { role: "model", parts: [{ text: "Hello! I'm Pratham's AI assistant. Feel free to ask me any questions about his skills or projects." }] }
+            { role: "system", content: systemPrompt },
+            { role: "assistant", content: "Hey! I'm Pratham's AI assistant. Ask me anything about his skills, projects, or just say hi 👋" }
         ];
 
         // Open/Close Modal
@@ -1158,24 +1160,34 @@ Here is Pratham's information:
             const userMessage = chatInput.value.trim();
             if (!userMessage) return;
 
-            // Add user message to UI
             addMessageToUI(userMessage, 'user');
             chatInput.value = '';
             chatSendBtn.disabled = true;
 
-            // Add loading indicator
             const loadingIndicator = addMessageToUI('typing...', 'loading');
             
             try {
-                // Call Gemini API
-                const aiResponse = await callGemini(userMessage);
-                
-                // Remove loading indicator
-                loadingIndicator.remove();
-                
-                // Add AI response to UI
-                addMessageToUI(aiResponse, 'ai');
+                chatHistory.push({ role: "user", content: userMessage });
 
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: chatHistory })
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const result = await response.json();
+                const text = result?.text;
+
+                loadingIndicator.remove();
+
+                if (text) {
+                    chatHistory.push({ role: "assistant", content: text });
+                    addMessageToUI(text, 'ai');
+                } else {
+                    addMessageToUI('Hmm, I didn\'t get a response. Try again?', 'ai');
+                }
             } catch (error) {
                 loadingIndicator.remove();
                 addMessageToUI('Sorry, I ran into an error. Please try again.', 'ai');
@@ -1184,62 +1196,13 @@ Here is Pratham's information:
             }
         });
 
-        // Add message to chat window
         function addMessageToUI(message, sender) {
             const messageElement = document.createElement('div');
             messageElement.className = `chat-message ${sender}`;
-            messageElement.textContent = message; // Simple text, no markdown rendering for simplicity here
+            messageElement.textContent = message;
             chatMessages.appendChild(messageElement);
-            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
             return messageElement;
-        }
-
-        // Call Gemini API via Netlify Function (keeps API key server-side)
-        async function callGemini(userMessage) {
-            // Add user message to history
-            chatHistory.push({ role: "user", parts: [{ text: userMessage }] });
-
-            // Construct payload
-            const payload = {
-                contents: chatHistory,
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                }
-            };
-
-            let response;
-            let retries = 3;
-            let delayMs = 1000;
-
-            // Retry with exponential backoff
-            for (let i = 0; i < retries; i++) {
-                try {
-                    response = await fetch('/api/chat', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const result = await response.json();
-                    const text = result?.text;
-
-                    if (text) {
-                        chatHistory.push({ role: "model", parts: [{ text }] });
-                        return text;
-                    } else {
-                        throw new Error('No text in API response.');
-                    }
-
-                } catch (error) {
-                    if (i === retries - 1) throw error;
-                    await delay(delayMs);
-                    delayMs *= 2;
-                }
-            }
         }
 
 
@@ -1423,43 +1386,38 @@ Here is Pratham's information:
                     artist: 'Adore',
                     album: 'did i tell u that i miss u',
                     year: '2024',
-                    duration: '3:24',
-                    durationSec: 204,
-                    cover: '/cd-adore.png'
+                    cover: '/cd-adore.png',
+                    audio: '/song-adore.mp3'
                 },
                 {
                     title: 'Fortnight',
                     artist: 'Taylor Swift (feat. Post Malone)',
                     album: 'The Tortured Poets Department',
                     year: '2024',
-                    duration: '3:48',
-                    durationSec: 228,
-                    cover: '/cd-fortnight.png'
+                    cover: '/cd-fortnight.png',
+                    audio: '/song-fortnight.mp3'
                 },
                 {
                     title: 'No. 1 Party Anthem',
                     artist: 'Arctic Monkeys',
                     album: 'AM',
                     year: '2013',
-                    duration: '4:03',
-                    durationSec: 243,
-                    cover: '/cd-party-anthem.png'
+                    cover: '/cd-party-anthem.png',
+                    audio: '/song-party-anthem.mp3'
                 },
                 {
                     title: "We Don't Talk Anymore",
                     artist: 'Charlie Puth (feat. Selena Gomez)',
                     album: 'Nine Track Mind',
                     year: '2016',
-                    duration: '3:37',
-                    durationSec: 217,
-                    cover: '/cd-we-dont-talk.png'
+                    cover: '/cd-we-dont-talk.png',
+                    audio: '/song-we-dont-talk.mp3'
                 }
             ];
 
             let currentSong = 0;
             let isPlaying = false;
-            let progressInterval = null;
-            let currentProgress = 0;
+            const audio = new Audio(songs[0].audio);
 
             const cdImage = document.getElementById('cd-image');
             const songTitle = document.getElementById('song-title');
@@ -1474,6 +1432,30 @@ Here is Pratham's information:
             const nextBtn = document.getElementById('song-next');
             const songDots = document.querySelectorAll('.song-dot');
 
+            function formatTime(sec) {
+                const m = Math.floor(sec / 60);
+                const s = Math.floor(sec % 60);
+                return m + ':' + String(s).padStart(2, '0');
+            }
+
+            // Update duration display when audio metadata loads
+            audio.addEventListener('loadedmetadata', () => {
+                songDuration.textContent = formatTime(audio.duration);
+            });
+
+            // Real-time progress update
+            audio.addEventListener('timeupdate', () => {
+                if (!audio.duration) return;
+                const pct = (audio.currentTime / audio.duration) * 100;
+                songProgress.style.width = pct + '%';
+                songCurrentTime.textContent = formatTime(audio.currentTime);
+            });
+
+            // Auto-advance when song ends
+            audio.addEventListener('ended', () => {
+                updateSong((currentSong + 1) % songs.length, 1);
+            });
+
             let isSwitching = false;
 
             function updateSong(index, direction) {
@@ -1481,7 +1463,11 @@ Here is Pratham's information:
                 isSwitching = true;
                 const song = songs[index];
                 const dir = direction || (index > currentSong ? 1 : -1);
+                const wasPlaying = isPlaying;
                 const swipeDist = 400;
+
+                // Stop current audio
+                audio.pause();
 
                 // Swipe current CD out
                 gsap.to(cdImage, {
@@ -1489,12 +1475,9 @@ Here is Pratham's information:
                     duration: 0.35,
                     ease: 'power2.in',
                     onComplete: () => {
-                        // Swap image while off-screen
                         cdImage.src = song.cover;
                         cdImage.alt = song.title;
-                        // Position new CD on opposite side
                         gsap.set(cdImage, { x: dir * swipeDist });
-                        // Swipe new CD in
                         gsap.to(cdImage, {
                             x: 0,
                             duration: 0.4,
@@ -1504,12 +1487,24 @@ Here is Pratham's information:
                                 songTitle.textContent = song.title;
                                 songArtist.textContent = song.artist;
                                 songAlbum.textContent = song.album + ' \u2022 ' + song.year;
-                                songDuration.textContent = song.duration;
-                                currentProgress = 0;
                                 songProgress.style.width = '0%';
                                 songCurrentTime.textContent = '0:00';
+                                songDuration.textContent = '--:--';
                                 songDots.forEach((dot, i) => dot.classList.toggle('active', i === index));
-                                if (isPlaying) stopPlayback();
+
+                                // Load new audio
+                                audio.src = song.audio;
+                                audio.load();
+                                if (wasPlaying) {
+                                    audio.play();
+                                    isPlaying = true;
+                                    playBtn.innerHTML = '<i class="ph-fill ph-pause text-3xl"></i>';
+                                    cdImage.classList.add('spinning');
+                                } else {
+                                    isPlaying = false;
+                                    playBtn.innerHTML = '<i class="ph-fill ph-play text-3xl"></i>';
+                                    cdImage.classList.remove('spinning');
+                                }
                                 isSwitching = false;
                             }
                         });
@@ -1518,33 +1513,17 @@ Here is Pratham's information:
             }
 
             function togglePlay() {
-                isPlaying = !isPlaying;
-                playBtn.innerHTML = isPlaying
-                    ? '<i class="ph-fill ph-pause text-3xl"></i>'
-                    : '<i class="ph-fill ph-play text-3xl"></i>';
-                cdImage.classList.toggle('spinning', isPlaying);
-
                 if (isPlaying) {
-                    progressInterval = setInterval(() => {
-                        currentProgress += 1;
-                        const song = songs[currentSong];
-                        const pct = Math.min((currentProgress / song.durationSec) * 100, 100);
-                        songProgress.style.width = pct + '%';
-                        const mins = Math.floor(currentProgress / 60);
-                        const secs = currentProgress % 60;
-                        songCurrentTime.textContent = mins + ':' + String(secs).padStart(2, '0');
-                        if (currentProgress >= song.durationSec) {
-                            updateSong((currentSong + 1) % songs.length, 1);
-                        }
-                    }, 1000);
+                    audio.pause();
+                    isPlaying = false;
+                    playBtn.innerHTML = '<i class="ph-fill ph-play text-3xl"></i>';
+                    cdImage.classList.remove('spinning');
                 } else {
-                    clearInterval(progressInterval);
+                    audio.play();
+                    isPlaying = true;
+                    playBtn.innerHTML = '<i class="ph-fill ph-pause text-3xl"></i>';
+                    cdImage.classList.add('spinning');
                 }
-            }
-
-            function stopPlayback() {
-                isPlaying = true;
-                togglePlay();
             }
 
             playBtn.addEventListener('click', togglePlay);
@@ -1555,14 +1534,12 @@ Here is Pratham's information:
                 updateSong(idx, idx > currentSong ? 1 : -1);
             }));
 
+            // Click to seek
             songProgressBar.addEventListener('click', (e) => {
+                if (!audio.duration) return;
                 const rect = songProgressBar.getBoundingClientRect();
                 const pct = (e.clientX - rect.left) / rect.width;
-                currentProgress = Math.floor(pct * songs[currentSong].durationSec);
-                songProgress.style.width = (pct * 100) + '%';
-                const mins = Math.floor(currentProgress / 60);
-                const secs = currentProgress % 60;
-                songCurrentTime.textContent = mins + ':' + String(secs).padStart(2, '0');
+                audio.currentTime = pct * audio.duration;
             });
 
             // Touch swipe — CD follows finger horizontally

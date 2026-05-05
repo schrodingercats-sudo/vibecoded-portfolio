@@ -1,3 +1,5 @@
 node_modules/
 .env
 .vercel
+*.mp3
+!public/*.mp3

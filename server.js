@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -52,21 +53,33 @@ app.get('/api/skills', async (req, res) => {
   }
 });
 
-// Gemini AI chat proxy
+// NVIDIA AI chat proxy (OpenAI-compatible)
 app.post('/api/chat', async (req, res) => {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.NVIDIA_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: 'GEMINI_API_KEY not configured.' });
+      return res.status(500).json({ error: 'NVIDIA_API_KEY not configured.' });
     }
 
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash-preview-05-20';
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const { messages } = req.body;
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'messages array is required.' });
+    }
 
-    const apiResponse = await fetch(apiUrl, {
+    const apiResponse = await fetch('https://integrate.api.nvidia.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body)
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'meta/llama-3.1-8b-instruct',
+        messages: messages,
+        temperature: 0.5,
+        top_p: 0.7,
+        max_tokens: 512,
+        stream: false
+      })
     });
 
     if (!apiResponse.ok) {
@@ -75,8 +88,8 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const result = await apiResponse.json();
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || null;
-    res.json({ text, raw: result });
+    const text = result.choices?.[0]?.message?.content || null;
+    res.json({ text });
   } catch (err) {
     console.error('Chat error:', err.message);
     res.status(500).json({ error: err.message });
